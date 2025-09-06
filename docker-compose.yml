@@ -1,0 +1,72 @@
+services:
+  order-db-write:
+    image: postgres:16
+    container_name: order-db-write
+    environment:
+      POSTGRES_DB: ${POSTGRES_WRITE_DB}
+      POSTGRES_USER: ${POSTGRES_WRITE_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_WRITE_PASSWORD}
+    ports:
+      - "${POSTGRES_WRITE_PORT}:5432"
+    volumes:
+      - order-db-write-data:/var/lib/postgresql/data
+
+  order-db-read:
+    image: postgres:16
+    container_name: order-db-read
+    environment:
+      POSTGRES_DB: ${POSTGRES_READ_DB}
+      POSTGRES_USER: ${POSTGRES_READ_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_READ_PASSWORD}
+      POSTGRES_MASTER_HOST: order-db-write
+      POSTGRES_MASTER_USER: ${POSTGRES_WRITE_USER}
+      POSTGRES_MASTER_PASSWORD: ${POSTGRES_WRITE_PASSWORD}
+    ports:
+      - "${POSTGRES_READ_PORT}:5432"
+    depends_on:
+      - order-db-write
+    command: >
+      bash -c "until pg_isready -h order-db-write -U ${POSTGRES_WRITE_USER}; do sleep 1; done;
+                     pg_basebackup -h order-db-write -D /var/lib/postgresql/data -U ${POSTGRES_WRITE_USER} -Fp -Xs -P -R;
+                     postgres -c 'hot_standby=on'"
+    volumes:
+      - order-db-read-data:/var/lib/postgresql/data
+
+  bgt-rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: bgt-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  order-processor:
+    build: ./order-processor
+    container_name: order-processor
+    ports:
+      - "${ORDER_PROCESSOR_PORT}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_WRITE_URL: jdbc:postgresql://order-db-write:5432/${POSTGRES_WRITE_DB}
+      SPRING_DATASOURCE_WRITE_USERNAME: ${POSTGRES_WRITE_USER}
+      SPRING_DATASOURCE_WRITE_PASSWORD: ${POSTGRES_WRITE_PASSWORD}
+      SPRING_DATASOURCE_READ_URL: jdbc:postgresql://order-db-read:5432/${POSTGRES_READ_DB}
+      SPRING_DATASOURCE_READ_USERNAME: ${POSTGRES_READ_USER}
+      SPRING_DATASOURCE_READ_PASSWORD: ${POSTGRES_READ_PASSWORD}
+      SPRING_RABBITMQ_HOST: bgt-rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_PORT}
+    depends_on:
+      - order-db-write
+      - order-db-read
+      - bgt-rabbitmq
+
+volumes:
+  order-db-write-data:
+  order-db-read-data:
+  rabbitmq-data:
