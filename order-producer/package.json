@@ -1,0 +1,10 @@
+{
+  "name": "btg-seed",
+  "version": "1.0.0",
+  "main": "seed.js",
+  "type": "module",
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "dotenv": "^16.3.1"
+  }
+}
