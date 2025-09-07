@@ -20,7 +20,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("""
            SELECT
-            o.clientCode as clientCode
+            o.clientCode as clientCode,
             COUNT(o) as totalOrders
            FROM Order o
            WHERE o.clientCode = :clientCode
