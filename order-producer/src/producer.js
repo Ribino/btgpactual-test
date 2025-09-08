@@ -55,7 +55,7 @@ async function seed() {
 
   for (const msg of messages) {
     channel.publish(exchange, queue, Buffer.from(JSON.stringify(msg)), { persistent: true });
-    console.log(`Message sent: ${msg}`);
+    console.log(`Message sent: ${JSON.stringify(msg)}`);
   }
 
   await channel.close();

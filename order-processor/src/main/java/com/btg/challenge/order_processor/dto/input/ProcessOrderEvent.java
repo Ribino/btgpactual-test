@@ -1,4 +1,4 @@
-package com.btg.challenge.order_processor.dto;
+package com.btg.challenge.order_processor.dto.input;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -9,4 +9,5 @@ public record ProcessOrderEvent(
     @JsonProperty("codigoCliente") Long clientCode,
     @JsonProperty("itens") List<ProcessOrderItemEvent> items
 ) {
+
 }
