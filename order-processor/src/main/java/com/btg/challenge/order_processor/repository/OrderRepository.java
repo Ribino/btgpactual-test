@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -26,7 +25,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     <T> Optional<T> findByCode(Long code, Class<T> type);
 
-    <T> List<T> findByClientCode(Long clientCode, Class<T> type);
+    Page<Order> findByClientCode(Long clientCode, Pageable pageable);
 
     @Query("""
            SELECT
@@ -46,7 +45,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            GROUP BY o.clientCode
            """)
     Page<ClientOrderCountProjection> findClientOrderCount(Pageable pageable);
-
-    boolean existsByCode(Long code);
 
 }

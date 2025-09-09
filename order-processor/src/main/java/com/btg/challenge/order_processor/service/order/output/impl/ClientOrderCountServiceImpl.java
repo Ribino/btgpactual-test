@@ -12,9 +12,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class ClientOrderCountServiceImpl implements ClientOrderCountService {
 
-    private OrderRepository repository;
+    private final OrderRepository repository;
 
-    private ClientOrderCountMapper mapper;
+    private final ClientOrderCountMapper mapper;
 
     public ClientOrderCountServiceImpl (
             OrderRepository repository,

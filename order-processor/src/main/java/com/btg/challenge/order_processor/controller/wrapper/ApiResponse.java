@@ -1,14 +1,14 @@
 package com.btg.challenge.order_processor.controller.wrapper;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.List;
 
 public record ApiResponse<T> (
      boolean success,
-     T data,
+     @JsonIgnore() T data,
      Pagination pagination,
      ApiError error,
      Instant timestamp
@@ -18,6 +18,16 @@ public record ApiResponse<T> (
                 true,
                 data,
                 null,
+                null,
+                Instant.now()
+        );
+    }
+
+    public static <T> ApiResponse<T> ok(T data, int page, int pageSize, long totalElements) {
+        return new ApiResponse<>(
+                true,
+                data,
+                new Pagination(page, pageSize, totalElements),
                 null,
                 Instant.now()
         );
@@ -34,7 +44,7 @@ public record ApiResponse<T> (
     }
 
     public static <T> ApiResponse<T> error(String code, String message) {
-        return new ApiResponse<T>(
+        return new ApiResponse<>(
                 false,
                 null,
                 null,

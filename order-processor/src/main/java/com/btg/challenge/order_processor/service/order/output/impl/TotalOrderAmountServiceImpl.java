@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class TotalOrderAmountServiceImpl implements TotalOrderAmountService {
 
-    private OrderRepository repository;
+    private final OrderRepository repository;
 
-    private TotalOrderAmountMapper mapper;
+    private final TotalOrderAmountMapper mapper;
 
     public TotalOrderAmountServiceImpl(
         OrderRepository repository,
