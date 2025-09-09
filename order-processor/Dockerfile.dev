@@ -1,0 +1,11 @@
+# Dockerfile.dev
+FROM gradle:8.3-jdk17 AS dev
+WORKDIR /app
+
+COPY build.gradle settings.gradle ./
+
+COPY src ./src
+
+EXPOSE 8081
+
+CMD ["gradle", "bootRun", "-x", "test", "--no-daemon"]

@@ -1,0 +1,84 @@
+services:
+  order-db-write:
+    image: postgres:16
+    container_name: order-db-write
+    environment:
+      POSTGRES_DB: ${POSTGRES_WRITE_DB}
+      POSTGRES_USER: ${POSTGRES_WRITE_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_WRITE_PASSWORD}
+    ports:
+      - "${POSTGRES_WRITE_PORT}:5432"
+    volumes:
+      - order-db-write-data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  order-producer:
+    build: ./order-producer
+    container_name: order-producer
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    command: [ "node", "producer.js" ]
+
+
+  order-processor:
+    build:
+      context: ./order-processor
+      dockerfile: Dockerfile.dev
+    container_name: order-processor
+    ports:
+      - "${ORDER_PROCESSOR_PORT}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_WRITE_URL: jdbc:postgresql://order-db-write:5432/${POSTGRES_WRITE_DB}
+      SPRING_DATASOURCE_WRITE_USERNAME: ${POSTGRES_WRITE_USER}
+      SPRING_DATASOURCE_WRITE_PASSWORD: ${POSTGRES_WRITE_PASSWORD}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_PORT}
+    depends_on:
+      - order-db-write
+      - rabbitmq
+      - order-producer
+    develop:
+      watch:
+        - action: sync
+          path: ./order-processor/src
+          target: /app/src
+        - action: sync
+          path: ./order-processor/build.gradle
+          target: /app/build.gradle
+        - action: sync
+          path: ./order-processor/settings.gradle
+          target: /app/settings.gradle
+
+    volumes:
+      - ./order-processor/src:/app/src
+      - ./order-processor/build.gradle:/app/build.gradle
+      - ./order-processor/settings.gradle:/app/settings.gradle
+
+volumes:
+  order-db-write-data:
+  rabbitmq-data:
