@@ -5,7 +5,10 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,7 +16,7 @@ import java.util.List;
 @Setter
 @ToString
 @Entity
-@Table(name = "order")
+@Table(name = "\"order\"")
 public class Order extends  BaseEntity {
     @Column(name = "code")
     private Long code;
@@ -21,12 +24,26 @@ public class Order extends  BaseEntity {
     @Column(name = "client_code")
     private Long clientCode;
 
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<OrderItem> items;
 
     @Column(name = "created_at")
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(name = "total_amount")
+    private BigDecimal totalAmount;
+
+    public void calculateTotalAmount() {
+        totalAmount = BigDecimal.ZERO;
+
+        for(var item : items) {
+            BigDecimal totalPerItem = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            totalAmount = totalAmount.add(totalPerItem);
+        }
+    }
 }

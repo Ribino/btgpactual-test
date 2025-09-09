@@ -1,8 +1,9 @@
 package com.btg.challenge.order_processor.repository;
 
 import com.btg.challenge.order_processor.entity.Order;
-import com.btg.challenge.order_processor.entity.projetion.ClientOrderCount;
-import org.aspectj.weaver.ast.Or;
+import com.btg.challenge.order_processor.repository.projection.ClientOrderCountProjection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,6 +27,17 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            WHERE o.clientCode = :clientCode
            GROUP BY o.clientCode
            """)
-    Optional<ClientOrderCount> findClientOrderCountByClientCode(@Param("clientCode") Long clientCode);
+    Optional<ClientOrderCountProjection> findClientOrderCountByClientCode(@Param("clientCode") Long clientCode);
+
+    @Query("""
+           SELECT
+            o.clientCode as clientCode,
+            COUNT(o) as totalOrders
+           FROM Order o
+           GROUP BY o.clientCode
+           """)
+    Page<ClientOrderCountProjection> findClientOrderCount(Pageable pageable);
+
+    boolean existsByCode(Long code);
 
 }
