@@ -2,6 +2,7 @@ package com.btg.challenge.order_processor.repository;
 
 import com.btg.challenge.order_processor.entity.Order;
 import com.btg.challenge.order_processor.repository.projection.ClientOrderCountProjection;
+import com.btg.challenge.order_processor.repository.projection.OrderTotalAmountProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,7 +16,15 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    <T> List<T> findByCode(Long code, Class<T> type);
+    @Query("""
+            SELECT
+                o.code as code,
+                o.totalAmount as totalAmount
+            FROM Order o
+            """)
+    Page<OrderTotalAmountProjection> findAllOrderTotalAmountProjection(Pageable page);
+
+    <T> Optional<T> findByCode(Long code, Class<T> type);
 
     <T> List<T> findByClientCode(Long clientCode, Class<T> type);
 
