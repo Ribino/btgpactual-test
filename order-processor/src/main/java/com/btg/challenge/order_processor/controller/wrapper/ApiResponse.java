@@ -8,7 +8,7 @@ import java.util.List;
 
 public record ApiResponse<T> (
      boolean success,
-     @JsonIgnore() T data,
+     T data,
      Pagination pagination,
      ApiError error,
      Instant timestamp
